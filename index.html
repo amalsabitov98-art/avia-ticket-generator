@@ -78,7 +78,7 @@
 
     .header-banner {
       min-height: 92pt;
-      padding: 0 34pt 0 23pt;
+      padding: 0 34.75pt 0 23pt;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -96,27 +96,27 @@
       object-fit: contain;
     }
     .banner-right {
-      font: 19pt "Times New Roman", Georgia, serif;
+      font: 18.2pt "Times New Roman", Georgia, serif;
       white-space: nowrap;
       margin-bottom: 4pt;
     }
     .card-top {
       margin-top: 4pt;
-      padding: 15pt 17pt 15pt 15pt;
+      padding: 15pt 17.75pt 15pt 15pt;
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       gap: 15pt;
     }
-    .pnr-left { display: flex; gap: 15pt; align-items: flex-start; }
+    .pnr-left { display: flex; gap: 15.4pt; align-items: flex-start; }
     .booking-qr { flex: none; width: 82.5pt; height: 82.5pt; }
     .booking-qr svg { display: block; width: 95.5pt; height: 95.5pt; margin: -6.5pt; }
-    .pnr-label { padding-top: 2pt; font-size: 10.5pt; line-height: 17.25pt; }
-    .pnr-code { margin-top: 4pt; color: var(--ticket-blue); font-size: 22.5pt; }
+    .pnr-label { padding-top: .75pt; font-size: 10.5pt; line-height: 17.25pt; }
+    .pnr-code { margin-top: 2.75pt; color: var(--ticket-blue); font-size: 22.5pt; }
     .status-right { text-align: right; padding-block: 2pt 3pt; }
     .status-value { margin: 3pt 0 9pt; color: var(--ticket-blue); font-size: 15pt; font-weight: bold; }
     .booking-date { max-width: 112pt; margin-left: auto; }
-    .booking-date-label { margin-bottom: 3pt; }
+    .booking-date-label { position: relative; top: 1.25pt; margin-bottom: 3.75pt; }
 
     .section-title-row { display: flex; align-items: center; gap: 13pt; font-weight: bold; }
     .section-icon { flex: none; display: block; width: 33.75pt; height: auto; }
@@ -124,31 +124,45 @@
 
     .flight-card { margin-top: 11.25pt; padding: 0 18pt 15pt; }
     .flight-heading { min-height: 69pt; margin-left: -3pt; padding-top: 6pt; gap: 15.75pt; }
-    .flight-route-sub { font-size: 10.5pt; }
+    .flight-heading > div { position: relative; top: -1.75pt; }
+    .flight-route-sub { font-size: 10.5pt; line-height: 16.5pt; }
     .flight-route-main { color: var(--ticket-blue); font-size: 13.5pt; }
     .flight-grid {
       display: grid;
-      grid-template-columns: 37.3% 37.3% 1fr;
+      grid-template-columns: 37.3% 37.15% 1fr;
       line-height: 15pt;
     }
-    .flight-grid > div { min-width: 0; padding-right: 12pt; }
-    .flight-grid > div:last-child { padding-right: 0; }
+    .flight-grid > div { position: relative; top: 3pt; min-width: 0; padding-right: 12pt; }
+    .flight-grid > div:last-child { top: 1.5pt; padding-right: 0; }
+    .flight-meta-large { font-size: 10.5pt; }
     .flight-airport { margin-top: 8pt; }
     .flight-num { color: var(--ticket-blue); font-size: 15pt; font-weight: bold; line-height: 23pt; margin-bottom: 5pt; }
     .flight-status { color: var(--ticket-blue); font-size: 10.5pt; font-weight: bold; }
-    .flight-checkin { margin-top: 8pt; line-height: 15.5pt; }
+    .flight-checkin { position: relative; top: 2pt; margin-top: 8pt; line-height: 15.5pt; }
     .flight-checkin strong { font-size: 10.5pt; }
     .flight-checkin > div + div { margin-top: 8pt; }
 
     .passenger-card { padding: 0 0 6pt 7.5pt; border-top: .5pt solid var(--paper-gray); }
-    .passenger-heading { min-height: 60pt; padding: 12pt 0 0 8.5pt; }
+    .passenger-heading { min-height: 60pt; padding: 9pt 0 0 8.5pt; }
     .info-table, .contact-table, .rules-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
     .info-table th, .info-table td,
     .contact-table th, .contact-table td,
     .rules-table td { border: .5pt solid var(--table-border); text-align: left; }
-    .info-table th { height: 63.75pt; padding: 2pt 3.75pt; font-size: 10.5pt; line-height: 14.75pt; }
-    .info-table td { height: 21pt; padding: 2pt 3.75pt; line-height: 13.6pt; }
-    .passenger-companion { display: block; }
+    .info-table th { height: 63.75pt; padding: .25pt 3.75pt 3.75pt; font-size: 10.5pt; line-height: 14.75pt; }
+    .info-table td { height: 21pt; padding: .5pt 3.75pt 3.5pt; line-height: 13.6pt; }
+    .info-table col:nth-child(1) { width: 22.05%; }
+    .info-table col:nth-child(2) { width: 18.53%; }
+    .info-table col:nth-child(3), .info-table col:nth-child(4) { width: 12.33%; }
+    .info-table col:nth-child(5) { width: 7.07%; }
+    .info-table col:nth-child(6) { width: 12.97%; }
+    .info-table col:nth-child(7) { width: 14.72%; }
+    .info-table--extended col:nth-child(1) { width: 22.25%; }
+    .info-table--extended col:nth-child(2) { width: 18.48%; }
+    .info-table--extended col:nth-child(5) { width: 7.04%; }
+    .info-table--extended col:nth-child(7) { width: 14.6%; }
+    .info-table--extended td { height: 20.7pt; }
+    .info-table--extended td:first-child > strong { display: block; margin-right: -.75pt; }
+    .passenger-companion { display: block; font-style: normal; transform: skewX(-12deg); transform-origin: left bottom; }
     .baggage-warning { display: block; text-align: center; font-size: 9pt; }
     .info-table th:nth-child(5), .info-table th:nth-child(6),
     .info-table td:first-child, .info-table td:nth-child(3) { padding-right: 0; }
@@ -157,18 +171,20 @@
     .contacts-panel { padding-block: 0; }
     .contact-card { padding: 0 15pt 15pt; }
     .contact-card + .contact-card { margin-top: 11.25pt; }
-    .contact-heading { min-height: 68.5pt; padding-bottom: 7pt; gap: 14.5pt; }
-    .agent-heading { min-height: 63pt; padding: 8pt 0 0; gap: 12.5pt; }
+    .contact-heading { min-height: 68.5pt; padding-bottom: 10pt; gap: 14.5pt; }
+    .agent-heading { min-height: 63pt; padding: 3pt 0 0; gap: 12.5pt; }
     .contact-table { font-size: 10.5pt; }
     .contact-table th { height: 26.25pt; }
     .contact-table td { height: 23pt; }
-    .contact-table th, .contact-table td { padding: 4pt 3.75pt; }
+    .contact-table th { padding: 2.5pt 3.75pt 5.5pt; }
+    .contact-table td { padding: 3.5pt 3.75pt 4.5pt; }
 
     .rules-panel { margin-top: 15pt; padding-block: 0 11.25pt; }
     .rules-card, .important-card { padding: 0 15pt 15pt; font-size: 9pt; line-height: 12.75pt; }
     .rules-card { padding-right: 22pt; }
-    .rules-heading { min-height: 68.5pt; padding-top: 22pt; gap: 2.25pt; }
+    .rules-heading { min-height: 68.5pt; padding-top: 18pt; gap: 2.25pt; }
     .rules-heading .title { font-size: 10.5pt; }
+    .rules-table { margin-top: -1pt; }
     .rules-table td { padding: 4pt 9pt; }
     .rules-table td:first-child { padding-inline: 4.5pt 0; font-weight: bold; }
     .rules-table .rules-head-blue { padding: 7.5pt 12pt; background: var(--ticket-blue); color: #fff; font-size: 10.5pt; line-height: 16pt; }
@@ -179,11 +195,12 @@
     .rules-table tr:nth-child(4) { height: 35pt; }
 
     .important-card { margin-top: 11.25pt; }
-    .important-heading { min-height: 56pt; padding-top: 14pt; gap: 9.75pt; }
+    .important-heading { min-height: 56pt; padding-top: 17pt; gap: 9.75pt; }
     .important-heading .section-icon { width: 18.75pt; }
     .important-heading .title { font-size: 9.75pt; text-decoration: underline; }
     .important-note p { margin: 0; }
-    .important-note p + p { margin-top: 12.5pt; }
+    .important-note p + p { margin-top: 12pt; }
+    .important-note a { color: #0000ff; }
 
     .thank-you {
       margin-left: 213.5pt;
@@ -193,7 +210,7 @@
       font-size: 13.5pt;
       font-weight: bold;
     }
-    .thank-you span { padding-top: 7pt; }
+    .thank-you > span { padding-top: 3.5pt; }
     .thank-you img { width: 100%; height: auto; }
 
     @media print {
@@ -211,6 +228,7 @@
       .info-table thead { display: table-row-group; break-after: avoid; }
       .contacts-panel { margin-top: 11.25pt; }
       .section-title-row { break-inside: avoid; break-after: avoid; }
+      .rules-heading { break-after: auto; }
       .contact-card, .rules-table tr, .thank-you { break-inside: avoid; }
       .thank-you { margin-top: 18pt; }
       @page { size: A4; margin: 0; }
