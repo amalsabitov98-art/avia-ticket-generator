@@ -196,11 +196,11 @@ function render() {
             <div>
               <strong>Номер рейса</strong>
               <div class="flight-num">${val("flightNo")}</div>
-              <div>Статус:</div>
+              <div class="flight-meta-large">Статус:</div>
               <div class="flight-status">ПОДТВЕРЖДЕННЫЙ</div>
               <div>Самолет: ${val("aircraft")}</div>
               <div>Остановка: 0</div>
-              <div>Длительность: ${val("duration")}</div>
+              <div class="flight-meta-large">Длительность: ${val("duration")}</div>
             </div>
           </div>
           <div class="flight-checkin">
@@ -214,15 +214,15 @@ function render() {
             <img src="icon-passenger.svg" alt="" class="section-icon">
             <div class="title">Информация Для Пассажиров</div>
           </div>
-          <table class="info-table">
+          <table class="info-table${passengers.length > 4 ? " info-table--extended" : ""}">
             <colgroup>
-              <col style="width:22.2%;">
-              <col style="width:18.3%;">
-              <col style="width:12.4%;">
-              <col style="width:12.4%;">
-              <col style="width:7.1%;">
-              <col style="width:13%;">
-              <col style="width:14.6%;">
+              <col>
+              <col>
+              <col>
+              <col>
+              <col>
+              <col>
+              <col>
             </colgroup>
             <thead>
               <tr>
