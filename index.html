@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Генератор маршрутной квитанции — Centrum Air</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Arial Unicode MS", Arial, Helvetica, sans-serif;
+      background: #eef1f5;
+      color: #111;
+    }
+    .app-layout {
+      display: flex;
+      gap: 20px;
+      padding: 20px;
+      max-width: 1500px;
+      margin: 0 auto;
+    }
+    .sidebar {
+      width: 430px;
+      flex-shrink: 0;
+      background: #fff;
+      border-radius: 10px;
+      padding: 18px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+      max-height: calc(100vh - 40px);
+      overflow-y: auto;
+    }
+    .sidebar h2 { margin: 0 0 12px 0; font-size: 18px; color: #164AAC; }
+    .sidebar h3 {
+      margin: 16px 0 8px 0; font-size: 14px; color: #333;
+      border-bottom: 1px solid #e0e0e0; padding-bottom: 4px;
+    }
+    .field { margin-bottom: 8px; }
+    .field label { display: block; font-size: 12px; color: #555; margin-bottom: 3px; }
+    .field input, .field textarea {
+      width: 100%; padding: 6px 8px; font-size: 13px;
+      font-family: "Arial Unicode MS", Arial, sans-serif;
+      border: 1px solid #ccc; border-radius: 5px;
+    }
+    .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .btn {
+      display: inline-block; width: 100%; padding: 10px;
+      background: #164AAC; color: #fff; border: none; border-radius: 6px;
+      font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 8px;
+    }
+    .btn:hover { background: #0f3a8a; }
+    .preview-pane {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 20px;
+    }
+
+    @font-face {
+      font-family: "Ticket Arial Unicode";
+      src: local("Arial Unicode MS"), local("ArialUnicodeMS");
+    }
+
+    .page {
+      --paper-gray: #dcd8d8;
+      --ticket-blue: #1649bc;
+      --table-border: #e9e9e9;
+      width: 210mm;
+      min-height: 297mm;
+      padding: 36pt 26.8pt 36pt 28.5pt;
+      background: #fff;
+      color: #000;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      font-family: "Ticket Arial Unicode", Arial, Helvetica, sans-serif;
+      font-size: 9.75pt;
+      line-height: 1.42;
+      overflow-wrap: anywhere;
+    }
+    .ticket-panel { background: var(--paper-gray); padding: 11.25pt; }
+    .page--itinerary .ticket-panel { margin-top: 2.25pt; }
+    .card { background: #fff; }
+
+    .header-banner {
+      min-height: 92pt;
+      padding: 0 34pt 0 23pt;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20pt;
+      background: var(--ticket-blue);
+      color: #fff;
+      border-radius: 8pt 8pt 0 0;
+    }
+    .brand-logo-wrap { display: flex; align-items: center; min-width: 0; margin-top: 6pt; }
+    .brand-logo-wrap img, .brand-logo-wrap svg {
+      display: block;
+      width: auto;
+      height: 57pt;
+      max-width: 250pt;
+      object-fit: contain;
+    }
+    .banner-right {
+      font: 19pt "Times New Roman", Georgia, serif;
+      white-space: nowrap;
+      margin-bottom: 4pt;
+    }
+    .card-top {
+      margin-top: 4pt;
+      padding: 15pt 17pt 15pt 15pt;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 15pt;
+    }
+    .pnr-left { display: flex; gap: 15pt; align-items: flex-start; }
+    .booking-qr { flex: none; width: 82.5pt; height: 82.5pt; }
+    .booking-qr svg { display: block; width: 95.5pt; height: 95.5pt; margin: -6.5pt; }
+    .pnr-label { padding-top: 2pt; font-size: 10.5pt; line-height: 17.25pt; }
+    .pnr-code { margin-top: 4pt; color: var(--ticket-blue); font-size: 22.5pt; }
+    .status-right { text-align: right; padding-block: 2pt 3pt; }
+    .status-value { margin: 3pt 0 9pt; color: var(--ticket-blue); font-size: 15pt; font-weight: bold; }
+    .booking-date { max-width: 112pt; margin-left: auto; }
+    .booking-date-label { margin-bottom: 3pt; }
+
+    .section-title-row { display: flex; align-items: center; gap: 13pt; font-weight: bold; }
+    .section-icon { flex: none; display: block; width: 33.75pt; height: auto; }
+    .section-title-row .title { font-size: 12pt; }
+
+    .flight-card { margin-top: 11.25pt; padding: 0 18pt 15pt; }
+    .flight-heading { min-height: 69pt; margin-left: -3pt; padding-top: 6pt; gap: 15.75pt; }
+    .flight-route-sub { font-size: 10.5pt; }
+    .flight-route-main { color: var(--ticket-blue); font-size: 13.5pt; }
+    .flight-grid {
+      display: grid;
+      grid-template-columns: 37.3% 37.3% 1fr;
+      line-height: 15pt;
+    }
+    .flight-grid > div { min-width: 0; padding-right: 12pt; }
+    .flight-grid > div:last-child { padding-right: 0; }
+    .flight-airport { margin-top: 8pt; }
+    .flight-num { color: var(--ticket-blue); font-size: 15pt; font-weight: bold; line-height: 23pt; margin-bottom: 5pt; }
+    .flight-status { color: var(--ticket-blue); font-size: 10.5pt; font-weight: bold; }
+    .flight-checkin { margin-top: 8pt; line-height: 15.5pt; }
+    .flight-checkin strong { font-size: 10.5pt; }
+    .flight-checkin > div + div { margin-top: 8pt; }
+
+    .passenger-card { padding: 0 0 6pt 7.5pt; border-top: .5pt solid var(--paper-gray); }
+    .passenger-heading { min-height: 60pt; padding: 12pt 0 0 8.5pt; }
+    .info-table, .contact-table, .rules-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    .info-table th, .info-table td,
+    .contact-table th, .contact-table td,
+    .rules-table td { border: .5pt solid var(--table-border); text-align: left; }
+    .info-table th { height: 63.75pt; padding: 2pt 3.75pt; font-size: 10.5pt; line-height: 14.75pt; }
+    .info-table td { height: 21pt; padding: 2pt 3.75pt; line-height: 13.6pt; }
+    .passenger-companion { display: block; }
+    .baggage-warning { display: block; text-align: center; font-size: 9pt; }
+    .info-table th:nth-child(5), .info-table th:nth-child(6),
+    .info-table td:first-child, .info-table td:nth-child(3) { padding-right: 0; }
+    .info-table tr { break-inside: avoid; }
+
+    .contacts-panel { padding-block: 0; }
+    .contact-card { padding: 0 15pt 15pt; }
+    .contact-card + .contact-card { margin-top: 11.25pt; }
+    .contact-heading { min-height: 68.5pt; padding-bottom: 7pt; gap: 14.5pt; }
+    .agent-heading { min-height: 63pt; padding: 8pt 0 0; gap: 12.5pt; }
+    .contact-table { font-size: 10.5pt; }
+    .contact-table th { height: 26.25pt; }
+    .contact-table td { height: 23pt; }
+    .contact-table th, .contact-table td { padding: 4pt 3.75pt; }
+
+    .rules-panel { margin-top: 15pt; padding-block: 0 11.25pt; }
+    .rules-card, .important-card { padding: 0 15pt 15pt; font-size: 9pt; line-height: 12.75pt; }
+    .rules-card { padding-right: 22pt; }
+    .rules-heading { min-height: 68.5pt; padding-top: 22pt; gap: 2.25pt; }
+    .rules-heading .title { font-size: 10.5pt; }
+    .rules-table td { padding: 4pt 9pt; }
+    .rules-table td:first-child { padding-inline: 4.5pt 0; font-weight: bold; }
+    .rules-table .rules-head-blue { padding: 7.5pt 12pt; background: var(--ticket-blue); color: #fff; font-size: 10.5pt; line-height: 16pt; }
+    .rules-table tr:first-child { height: 48pt; }
+    .rules-table tr:nth-child(2) { height: 67pt; }
+    .rules-table tr:nth-child(2) td { padding-block: 1.5pt; }
+    .rules-table tr:nth-child(3) { height: 22.5pt; }
+    .rules-table tr:nth-child(4) { height: 35pt; }
+
+    .important-card { margin-top: 11.25pt; }
+    .important-heading { min-height: 56pt; padding-top: 14pt; gap: 9.75pt; }
+    .important-heading .section-icon { width: 18.75pt; }
+    .important-heading .title { font-size: 9.75pt; text-decoration: underline; }
+    .important-note p { margin: 0; }
+    .important-note p + p { margin-top: 12.5pt; }
+
+    .thank-you {
+      margin-left: 213.5pt;
+      display: grid;
+      grid-template-columns: 118.7pt 87.4pt;
+      align-items: start;
+      font-size: 13.5pt;
+      font-weight: bold;
+    }
+    .thank-you span { padding-top: 7pt; }
+    .thank-you img { width: 100%; height: auto; }
+
+    @media print {
+      body { background: #fff; }
+      .sidebar { display: none; }
+      .app-layout, .preview-pane { display: block; padding: 0; margin: 0; max-width: none; }
+      .preview-pane {
+        padding: 36pt 26.8pt 36pt 28.5pt;
+        box-decoration-break: clone;
+        -webkit-box-decoration-break: clone;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+      .page { display: contents; }
+      .info-table thead { display: table-row-group; break-after: avoid; }
+      .contacts-panel { margin-top: 11.25pt; }
+      .section-title-row { break-inside: avoid; break-after: avoid; }
+      .contact-card, .rules-table tr, .thank-you { break-inside: avoid; }
+      .thank-you { margin-top: 18pt; }
+      @page { size: A4; margin: 0; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-layout">
+  <div class="sidebar">
+    <h2>Конструктор билета</h2>
+    <button class="btn" onclick="window.print()">Скачать / Печать PDF</button>
+
+    <h3>1. Шапка и Логотип</h3>
+    <div class="field">
+      <label>Загрузить логотип (файл SVG / PNG / JPG)</label>
+      <input type="file" id="logoInput" accept=".svg,image/svg+xml,image/*">
+    </div>
+    <div class="field">
+      <label>Или вставить код SVG (&lt;svg&gt;...&lt;/svg&gt;)</label>
+      <textarea id="svgCodeInput" rows="2" placeholder="Вставьте сюда код <svg>..."></textarea>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Код брони (PNR)</label>
+        <input type="text" id="pnrCode" value="DEMO-1">
+      </div>
+      <div class="field">
+        <label>Статус бронирования</label>
+        <input type="text" id="bookingStatus" value="Подтвержденный">
+      </div>
+    </div>
+    <div class="field">
+      <label for="bookingSurname">Фамилия для QR (как в брони)</label>
+      <input type="text" id="bookingSurname" maxlength="120" placeholder="По умолчанию — фамилия первого пассажира">
+    </div>
+    <div class="field">
+      <label>Дата бронирования</label>
+      <input type="text" id="bookingDate" value="Пятница, Октябрь 30, 2026">
+    </div>
+
+    <h3>2. Данные рейса</h3>
+    <div class="row2">
+      <div class="field">
+        <label>Маршрут (заголовок)</label>
+        <input type="text" id="routeTitle" value="Ташкент - Джидда">
+      </div>
+      <div class="field">
+        <label>Номер рейса</label>
+        <input type="text" id="flightNo" value="C63321">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Дата и время вылета</label>
+        <input type="text" id="depDateTime" value="Суббота, Октябрь 31, 2026 09:30">
+      </div>
+      <div class="field">
+        <label>Дата и время прилёта</label>
+        <input type="text" id="arrDateTime" value="Суббота, Октябрь 31, 2026 13:10">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Код вылета / Сегмент</label>
+        <input type="text" id="depCode" value="TAS">
+      </div>
+      <div class="field">
+        <label>Код прилёта</label>
+        <input type="text" id="arrCode" value="JED">
+      </div>
+    </div>
+    <div class="field">
+      <label>Аэропорт и терминал вылета</label>
+      <input type="text" id="depAirport" value="Международный Аэропорт Ташкент имени Ислама Каримова | Терминал T2-INTERNATIONAL">
+    </div>
+    <div class="field">
+      <label>Аэропорт и терминал прилёта</label>
+      <input type="text" id="arrAirport" value="Международный Аэропорт короля Абдулазиза | Терминал HAJJ">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Регистрация открывается</label>
+        <input type="text" id="regOpen" value="Суббота, Октябрь 31, 2026 06:30">
+      </div>
+      <div class="field">
+        <label>Регистрация заканчивается</label>
+        <input type="text" id="regClose" value="Суббота, Октябрь 31, 2026 08:30">
+      </div>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Самолёт</label>
+        <input type="text" id="aircraft" value="A330-343">
+      </div>
+      <div class="field">
+        <label>Длительность</label>
+        <input type="text" id="duration" value="05ч:40м">
+      </div>
+    </div>
+
+    <h3>3. Список пассажиров</h3>
+    <div class="row2">
+      <div class="field">
+        <label>Класс по умолчанию</label>
+        <input type="text" id="defClass" value="Эконом / AF">
+      </div>
+      <div class="field">
+        <label>Багаж по умолчанию</label>
+        <input type="text" id="defBaggage" value="30 килограмм">
+      </div>
+    </div>
+    <div class="field">
+      <label>Начальный № билета (автонумерация, если не указан через |)</label>
+      <input type="text" id="startTicketNo" value="9990000000001">
+    </div>
+    <div class="field">
+      <label for="passengersList">Пассажиры (по одному на строку). Формат: <b>ФИО | Билет | Класс | Багаж | Сопровождающий</b>. Обязательно только ФИО.</label>
+      <textarea id="passengersList" rows="6">QURBONOV ZAFARJON | 9990000000001
+QURBONOVA QAROKIZ | 9990000000002
+QURBONOVA KHAMIZAHUSEINOVNA | 9990000000003</textarea>
+    </div>
+
+    <h3>4. Контакты и Агент</h3>
+    <div class="field">
+      <label>Контактное лицо</label>
+      <input type="text" id="contactPerson" value="ZAFARJON QURBONOV">
+    </div>
+    <div class="field">
+      <label>Агентство</label>
+      <input type="text" id="agentName" value="DEMO TRAVEL">
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Телефон</label>
+        <input type="text" id="agentPhone" value="+998-00-000-00-00">
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input type="text" id="agentEmail" value="demo@example.com">
+      </div>
+    </div>
+  </div>
+
+  <div class="preview-pane" id="previewArea"></div>
+</div>
+<script src="qrcode.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
