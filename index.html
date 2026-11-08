@@ -48,6 +48,7 @@
       font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 8px;
     }
     .btn:hover { background: #0f3a8a; }
+    .edit-hint { margin: 8px 0 0; font-size: 12px; line-height: 1.4; color: #555; }
     .preview-pane {
       flex: 1; display: flex; flex-direction: column; align-items: center; gap: 20px;
     }
@@ -164,6 +165,7 @@
     .info-table--extended td:first-child > strong { display: block; margin-right: -.75pt; }
     .passenger-companion { display: block; font-style: normal; transform: skewX(-12deg); transform-origin: left bottom; }
     .baggage-warning { display: block; text-align: center; font-size: 9pt; }
+    .passenger-companion[hidden], .baggage-warning[hidden] { display: none; }
     .info-table th:nth-child(5), .info-table th:nth-child(6),
     .info-table td:first-child, .info-table td:nth-child(3) { padding-right: 0; }
     .info-table tr { break-inside: avoid; }
@@ -213,6 +215,14 @@
     .thank-you > span { padding-top: 3.5pt; }
     .thank-you img { width: 100%; height: auto; }
 
+    .inline-date-time { white-space: pre-line; }
+    @media screen {
+      .inline-field { cursor: text; border-radius: 2px; }
+      .inline-field:hover { outline: 1px dashed currentColor; }
+      .inline-field:focus { outline: 2px solid #164AAC; background: #edf4ff; }
+      .inline-field:empty::before { content: "…"; opacity: .5; }
+    }
+
     @media print {
       body { background: #fff; }
       .sidebar { display: none; }
@@ -240,6 +250,7 @@
   <div class="sidebar">
     <h2>Конструктор билета</h2>
     <button class="btn" onclick="window.print()">Скачать / Печать PDF</button>
+    <p class="edit-hint">Нажмите на поле в билете справа, чтобы изменить его. Enter сохраняет правку, Esc отменяет.</p>
 
     <h3>1. Шапка и Логотип</h3>
     <div class="field">
@@ -252,11 +263,11 @@
     </div>
     <div class="row2">
       <div class="field">
-        <label>Код брони (PNR)</label>
+        <label for="pnrCode">Код брони (PNR)</label>
         <input type="text" id="pnrCode" value="DEMO-1">
       </div>
       <div class="field">
-        <label>Статус бронирования</label>
+        <label for="bookingStatus">Статус бронирования</label>
         <input type="text" id="bookingStatus" value="Подтвержденный">
       </div>
     </div>
@@ -265,66 +276,66 @@
       <input type="text" id="bookingSurname" maxlength="120" placeholder="По умолчанию — фамилия первого пассажира">
     </div>
     <div class="field">
-      <label>Дата бронирования</label>
+      <label for="bookingDate">Дата бронирования</label>
       <input type="text" id="bookingDate" value="Пятница, Октябрь 30, 2026">
     </div>
 
     <h3>2. Данные рейса</h3>
     <div class="row2">
       <div class="field">
-        <label>Маршрут (заголовок)</label>
+        <label for="routeTitle">Маршрут (заголовок)</label>
         <input type="text" id="routeTitle" value="Ташкент - Джидда">
       </div>
       <div class="field">
-        <label>Номер рейса</label>
+        <label for="flightNo">Номер рейса</label>
         <input type="text" id="flightNo" value="C63321">
       </div>
     </div>
     <div class="row2">
       <div class="field">
-        <label>Дата и время вылета</label>
+        <label for="depDateTime">Дата и время вылета</label>
         <input type="text" id="depDateTime" value="Суббота, Октябрь 31, 2026 09:30">
       </div>
       <div class="field">
-        <label>Дата и время прилёта</label>
+        <label for="arrDateTime">Дата и время прилёта</label>
         <input type="text" id="arrDateTime" value="Суббота, Октябрь 31, 2026 13:10">
       </div>
     </div>
     <div class="row2">
       <div class="field">
-        <label>Код вылета / Сегмент</label>
+        <label for="depCode">Код вылета / Сегмент</label>
         <input type="text" id="depCode" value="TAS">
       </div>
       <div class="field">
-        <label>Код прилёта</label>
+        <label for="arrCode">Код прилёта</label>
         <input type="text" id="arrCode" value="JED">
       </div>
     </div>
     <div class="field">
-      <label>Аэропорт и терминал вылета</label>
+      <label for="depAirport">Аэропорт и терминал вылета</label>
       <input type="text" id="depAirport" value="Международный Аэропорт Ташкент имени Ислама Каримова | Терминал T2-INTERNATIONAL">
     </div>
     <div class="field">
-      <label>Аэропорт и терминал прилёта</label>
+      <label for="arrAirport">Аэропорт и терминал прилёта</label>
       <input type="text" id="arrAirport" value="Международный Аэропорт короля Абдулазиза | Терминал HAJJ">
     </div>
     <div class="row2">
       <div class="field">
-        <label>Регистрация открывается</label>
+        <label for="regOpen">Регистрация открывается</label>
         <input type="text" id="regOpen" value="Суббота, Октябрь 31, 2026 06:30">
       </div>
       <div class="field">
-        <label>Регистрация заканчивается</label>
+        <label for="regClose">Регистрация заканчивается</label>
         <input type="text" id="regClose" value="Суббота, Октябрь 31, 2026 08:30">
       </div>
     </div>
     <div class="row2">
       <div class="field">
-        <label>Самолёт</label>
+        <label for="aircraft">Самолёт</label>
         <input type="text" id="aircraft" value="A330-343">
       </div>
       <div class="field">
-        <label>Длительность</label>
+        <label for="duration">Длительность</label>
         <input type="text" id="duration" value="05ч:40м">
       </div>
     </div>
@@ -353,20 +364,20 @@ QURBONOVA KHAMIZAHUSEINOVNA | 9990000000003</textarea>
 
     <h3>4. Контакты и Агент</h3>
     <div class="field">
-      <label>Контактное лицо</label>
+      <label for="contactPerson">Контактное лицо</label>
       <input type="text" id="contactPerson" value="ZAFARJON QURBONOV">
     </div>
     <div class="field">
-      <label>Агентство</label>
+      <label for="agentName">Агентство</label>
       <input type="text" id="agentName" value="DEMO TRAVEL">
     </div>
     <div class="row2">
       <div class="field">
-        <label>Телефон</label>
+        <label for="agentPhone">Телефон</label>
         <input type="text" id="agentPhone" value="+998-00-000-00-00">
       </div>
       <div class="field">
-        <label>Email</label>
+        <label for="agentEmail">Email</label>
         <input type="text" id="agentEmail" value="demo@example.com">
       </div>
     </div>
