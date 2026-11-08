@@ -4,6 +4,8 @@ let customSvgRaw = localStorage.getItem("savedTicketSvg") || "";
 const AIRLINE_URL = "https://centrum-air.com";
 const BOOKING_SEARCH_URL = "https://booking.centrum-air.com/ibe/C6/home?language=ru#/guest/search";
 let bookingQr = { url: "", svg: "" };
+const preview = document.getElementById("previewArea");
+const passengerLabels = ["Имя пассажира", "Электронный билет", "Класс", "Багаж", "Сопровождающий"];
 
 const ids = [
   "brandName", "pnrCode", "bookingSurname", "bookingStatus", "bookingDate",
@@ -19,13 +21,13 @@ function val(id) {
   return el ? el.value : "";
 }
 
-function splitDateTime(str) {
+function formatDateTime(str) {
   const parts = str.trim().split(/\s+/);
   if (parts.length > 1 && /^\d{1,2}:\d{2}$/.test(parts[parts.length - 1])) {
     const time = parts.pop();
-    return { date: parts.join(" "), time };
+    return parts.join(" ") + "\n" + time;
   }
-  return { date: str, time: "" };
+  return str;
 }
 
 function splitAirport(str) {
@@ -34,25 +36,51 @@ function splitAirport(str) {
 }
 
 function parsePassengers() {
-  const raw = val("passengersList").split("\n").map(l => l.trim()).filter(Boolean);
+  const lines = val("passengersList").split("\n");
   const defClass = val("defClass");
   const defBag = val("defBaggage");
-  const seg = `${val("depCode")} > ${val("arrCode")}`;
-  let baseTicket = BigInt(val("startTicketNo").replace(/\D/g, "") || "9990000000001");
-
-  return raw.map((line, idx) => {
+  const baseTicket = BigInt(val("startTicketNo").replace(/\D/g, "") || "9990000000001");
+  const passengers = [];
+  lines.forEach((line, lineIndex) => {
+    if (!line.trim()) return;
     const cols = line.split("|").map(c => c.trim());
     const name = cols[0] || "";
-    const ticket = cols[1] ? cols[1] : (baseTicket + BigInt(idx)).toString();
+    const ticket = cols[1] || (baseTicket + BigInt(passengers.length)).toString();
     const cls = cols[2] || defClass;
     const bag = cols[3] || defBag;
     const companion = cols[4] || "";
-    return { name, ticket, cls, seg, bag, companion };
+    passengers.push({ name, ticket, cls, bag, companion, lineIndex });
   });
+  return passengers;
 }
 
 function escapeHtml(text) {
-  return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;");
+  return text.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+}
+
+function editable(html, binding, label, className = "") {
+  return `<span class="inline-field ${className}" contenteditable="plaintext-only" role="textbox" aria-label="${escapeHtml(label)}" ${binding}>${html}</span>`;
+}
+
+function field(id, value = val(id), part = "") {
+  const label = document.getElementById(id).labels[0].textContent;
+  const binding = `data-field="${id}" data-part="${part}"`;
+  const dateTime = id === "depDateTime" || id === "arrDateTime";
+  const html = part === "term" ? formatTerminal(value) : escapeHtml(value);
+  const name = part === "term" ? label.replace("Аэропорт и терминал", "Терминал") : label;
+  return editable(html, binding, name, dateTime ? "inline-date-time" : "");
+}
+
+function passengerField(column, value) {
+  return editable(escapeHtml(value), `data-passenger-column="${column}"`, passengerLabels[column]);
+}
+
+function routeSegment(separator) {
+  return val("depCode") + separator + val("arrCode");
+}
+
+function hasNoBaggage(bag) {
+  return /^0\s*(?:кг|килограмм(?:а|ов)?)?$/i.test(bag.trim());
 }
 
 function bookingUrl(pnr, passengers) {
@@ -77,11 +105,12 @@ function bookingQrSvg(url) {
 }
 
 function formatTerminal(terminal) {
+  if (!terminal) return "";
   const label = terminal.match(/^Терминал\s+/i)?.[0] || "";
-  return `${label}<strong>${terminal.slice(label.length)}</strong>`;
+  return `${label}<strong>${escapeHtml(terminal.slice(label.length))}</strong>`;
 }
 
-function contactCard(title, nameLabel, name, icon, headingClass = "") {
+function contactCard(title, nameLabel, nameField, icon, headingClass = "") {
   return `
     <div class="card contact-card">
       <div class="section-title-row contact-heading ${headingClass}">
@@ -94,7 +123,7 @@ function contactCard(title, nameLabel, name, icon, headingClass = "") {
           <tr><th>${nameLabel}</th><th>Контактный Номер</th><th>Адрес электронной почты</th></tr>
         </thead>
         <tbody>
-          <tr><td>${name}</td><td>${val("agentPhone")}</td><td>${val("agentEmail")}</td></tr>
+          <tr><td>${field(nameField)}</td><td>${field("agentPhone")}</td><td>${field("agentEmail")}</td></tr>
         </tbody>
       </table>
     </div>
@@ -102,8 +131,8 @@ function contactCard(title, nameLabel, name, icon, headingClass = "") {
 }
 
 function render() {
-  const depDT = splitDateTime(val("depDateTime"));
-  const arrDT = splitDateTime(val("arrDateTime"));
+  const depDT = formatDateTime(val("depDateTime"));
+  const arrDT = formatDateTime(val("arrDateTime"));
   const depAP = splitAirport(val("depAirport"));
   const arrAP = splitAirport(val("arrAirport"));
   const passengers = parsePassengers();
@@ -118,21 +147,15 @@ function render() {
   }
 
   const passRows = passengers.map(p => {
-    const companion = p.companion
-      ? `<em class="passenger-companion">С кем вы летите :<br>${escapeHtml(p.companion)}</em>`
-      : "";
-    const baggageWarning = /^0\s*(?:кг|килограмм(?:а|ов)?)?$/i.test(p.bag.trim())
-      ? '<span class="baggage-warning" aria-hidden="true">⚠️</span>'
-      : "";
     return `
-      <tr>
-        <td><strong>${escapeHtml(p.name)}</strong>${companion}</td>
-        <td>${escapeHtml(p.ticket)}</td>
-        <td>${escapeHtml(p.cls)}</td>
-        <td>${escapeHtml(p.seg)}</td>
+      <tr data-passenger-line="${p.lineIndex}">
+        <td><strong>${passengerField(0, p.name)}</strong><em class="passenger-companion"${p.companion ? "" : " hidden"}>С кем вы летите :<br>${passengerField(4, p.companion)}</em></td>
+        <td>${passengerField(1, p.ticket)}</td>
+        <td>${passengerField(2, p.cls)}</td>
+        <td data-route-separator=" &gt; ">${escapeHtml(routeSegment(" > "))}</td>
         <td></td>
         <td></td>
-        <td>${baggageWarning}${escapeHtml(p.bag)}</td>
+        <td><span class="baggage-warning" aria-hidden="true"${hasNoBaggage(p.bag) ? "" : " hidden"}>⚠️</span>${passengerField(3, p.bag)}</td>
       </tr>
     `;
   }).join("");
@@ -152,15 +175,15 @@ function render() {
             </a>
             <div>
               <div class="pnr-label">Ссылка для<br>Бронирования</div>
-              <div class="pnr-code">${escapeHtml(pnr)}</div>
+              <div class="pnr-code">${field("pnrCode", pnr)}</div>
             </div>
           </div>
           <div class="status-right">
             <div>Статус Бронирования</div>
-            <div class="status-value">${val("bookingStatus")}</div>
+            <div class="status-value">${field("bookingStatus")}</div>
             <div class="booking-date">
               <div class="booking-date-label">Дата Бронирования</div>
-              ${val("bookingDate")}
+              ${field("bookingDate")}
             </div>
           </div>
         </div>
@@ -170,42 +193,42 @@ function render() {
             <img src="icon-plane.svg" alt="" class="section-icon">
             <div>
               <div class="flight-route-sub">Отправляющийся Рейс</div>
-              <div class="flight-route-main">${val("routeTitle")}</div>
+              <div class="flight-route-main">${field("routeTitle")}</div>
             </div>
           </div>
 
           <div class="flight-grid">
             <div>
               <div>Отправление :</div>
-              <strong>${depDT.date}<br>${depDT.time}</strong>
+              <strong>${field("depDateTime", depDT)}</strong>
               <div class="flight-airport">
-                <strong>${val("depCode")}</strong>
-                <div>${depAP.name}</div>
-                <div>${formatTerminal(depAP.term)}</div>
+                <strong>${field("depCode")}</strong>
+                <div>${field("depAirport", depAP.name, "name")}</div>
+                <div>${field("depAirport", depAP.term, "term")}</div>
               </div>
             </div>
             <div>
               <div>Прибытие :</div>
-              <strong>${arrDT.date}<br>${arrDT.time}</strong>
+              <strong>${field("arrDateTime", arrDT)}</strong>
               <div class="flight-airport">
-                <strong>${val("arrCode")}</strong>
-                <div>${arrAP.name}</div>
-                <div>${formatTerminal(arrAP.term)}</div>
+                <strong>${field("arrCode")}</strong>
+                <div>${field("arrAirport", arrAP.name, "name")}</div>
+                <div>${field("arrAirport", arrAP.term, "term")}</div>
               </div>
             </div>
             <div>
               <strong>Номер рейса</strong>
-              <div class="flight-num">${val("flightNo")}</div>
+              <div class="flight-num">${field("flightNo")}</div>
               <div class="flight-meta-large">Статус:</div>
               <div class="flight-status">ПОДТВЕРЖДЕННЫЙ</div>
-              <div>Самолет: ${val("aircraft")}</div>
+              <div>Самолет: ${field("aircraft")}</div>
               <div>Остановка: 0</div>
-              <div class="flight-meta-large">Длительность: ${val("duration")}</div>
+              <div class="flight-meta-large">Длительность: ${field("duration")}</div>
             </div>
           </div>
           <div class="flight-checkin">
-            <div>Регистрация Открывается :<br><strong>${val("regOpen")}</strong></div>
-            <div>Регистрация Заканчивается :<br><strong>${val("regClose")}</strong></div>
+            <div>Регистрация Открывается :<br><strong>${field("regOpen")}</strong></div>
+            <div>Регистрация Заканчивается :<br><strong>${field("regClose")}</strong></div>
           </div>
         </div>
 
@@ -245,8 +268,8 @@ function render() {
 
     <div class="page">
       <div class="ticket-panel contacts-panel">
-        ${contactCard("Контактная Информация", "Контактное Лицо", val("contactPerson"), "icon-contact.svg")}
-        ${contactCard("Информация Об Агенте", "Агент", val("agentName"), "icon-agent.svg", "agent-heading")}
+        ${contactCard("Контактная Информация", "Контактное Лицо", "contactPerson", "icon-contact.svg")}
+        ${contactCard("Информация Об Агенте", "Агент", "agentName", "icon-agent.svg", "agent-heading")}
       </div>
 
       <div class="ticket-panel rules-panel">
@@ -259,7 +282,7 @@ function render() {
             <colgroup><col style="width:19%;"><col></colgroup>
             <tr>
               <td>Правило<br>Применения<br>Тарифов</td>
-              <td class="rules-head-blue">000001<br>${val("depCode")}-${val("arrCode")}</td>
+              <td class="rules-head-blue">000001<br><span data-route-separator="-">${escapeHtml(routeSegment("-"))}</span></td>
             </tr>
             <tr>
               <td>Багаж</td>
@@ -303,8 +326,105 @@ function render() {
     </div>
   `;
 
-  document.getElementById("previewArea").innerHTML = html;
+  preview.innerHTML = html;
 }
+
+function refreshBookingQr() {
+  const link = preview.querySelector(".booking-qr");
+  const url = bookingUrl(val("pnrCode").trim(), parsePassengers());
+  if (link.getAttribute("href") !== url) {
+    link.href = url;
+    link.innerHTML = bookingQrSvg(url);
+  }
+}
+
+function saveField(element, value) {
+  const { field: id, part } = element.dataset;
+  const input = document.getElementById(id);
+  if (part) {
+    const airport = splitAirport(input.value);
+    airport[part] = value.replaceAll("|", " ").trim();
+    input.value = airport.term ? `${airport.name} | ${airport.term}` : airport.name;
+    element.innerHTML = part === "term" ? formatTerminal(airport.term) : escapeHtml(airport.name);
+    return;
+  }
+
+  input.value = value;
+  const displayed = element.classList.contains("inline-date-time") ? formatDateTime(value) : value;
+  preview.querySelectorAll(`[data-field="${id}"]`).forEach(field => {
+    field.textContent = displayed;
+  });
+
+  if (id === "pnrCode") refreshBookingQr();
+  if (id === "depCode" || id === "arrCode") {
+    preview.querySelectorAll("[data-route-separator]").forEach(segment => {
+      segment.textContent = routeSegment(segment.dataset.routeSeparator);
+    });
+  }
+}
+
+function savePassengerField(element, value, originalText) {
+  const row = element.closest("[data-passenger-line]");
+  const lineIndex = Number(row.dataset.passengerLine);
+  const column = Number(element.dataset.passengerColumn);
+  const input = document.getElementById("passengersList");
+  const lines = input.value.split("\n");
+  const cols = lines[lineIndex].split("|").map(col => col.trim());
+  const text = value.replaceAll("|", " ").trim();
+  if (column === 0 && !text) {
+    element.textContent = originalText;
+    return;
+  }
+
+  cols[column] = text;
+  lines[lineIndex] = Array.from(cols, col => col || "").join(" | ");
+  input.value = lines.join("\n");
+
+  const passenger = parsePassengers().find(p => p.lineIndex === lineIndex);
+  element.textContent = [passenger.name, passenger.ticket, passenger.cls, passenger.bag, passenger.companion][column];
+  row.querySelector(".baggage-warning").hidden = !hasNoBaggage(passenger.bag);
+  row.querySelector(".passenger-companion").hidden = !passenger.companion;
+  if (column === 0) refreshBookingQr();
+}
+
+let activeEdit;
+
+preview.addEventListener("focusin", ({ target }) => {
+  if (!target.matches(".inline-field")) return;
+  activeEdit = { element: target, text: target.innerText, html: target.innerHTML };
+});
+
+preview.addEventListener("focusout", ({ target }) => {
+  if (activeEdit?.element !== target) return;
+  const { text, html } = activeEdit;
+  activeEdit = undefined;
+  if (target.innerText === text) {
+    if (target.innerHTML !== html) target.innerHTML = html;
+    return;
+  }
+
+  const value = target.innerText.trim().replace(/\s*\n\s*/g, " ");
+  if (target.hasAttribute("data-passenger-column")) {
+    savePassengerField(target, value, text);
+  } else {
+    saveField(target, value);
+  }
+});
+
+preview.addEventListener("keydown", event => {
+  if (activeEdit?.element !== event.target || event.isComposing) return;
+  if (event.key === "Escape") {
+    event.preventDefault();
+    event.target.innerHTML = activeEdit.html;
+    event.target.blur();
+  }
+  if (event.key === "Enter") {
+    event.preventDefault();
+    event.target.blur();
+  }
+});
+
+window.addEventListener("beforeprint", () => activeEdit?.element.blur());
 
 ids.forEach(id => {
   const el = document.getElementById(id);
